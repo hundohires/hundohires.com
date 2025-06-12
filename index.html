@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HundoHire</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #fff 0%, #a8a8a8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .button-success {
+            background-color: #22c55e !important;
+            color: white !important;
+        }
+        .button-error {
+            background-color: #ef4444 !important;
+            color: white !important;
+        }
+        .checkmark {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            position: relative;
+        }
+        .checkmark:after {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 3px;
+            width: 5px;
+            height: 10px;
+            border: solid #22c55e;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .checkmark.error:after {
+            border-color: #ef4444;
+        }
+    </style>
+</head>
+<body class="bg-black text-white">
+    <div class="min-h-screen flex flex-col">
+        <main class="flex-1 flex items-center justify-center">
+            <div class="w-full max-w-4xl px-4">
+                <!-- Title Section -->
+                <div class="text-center mb-16">
+                    <h1 class="text-8xl font-bold mb-6 gradient-text">
+                        HundoHire
+                    </h1>
+                    <p class="text-2xl text-gray-300 max-w-2xl mx-auto">
+                        Your AI recruitment agent that finds matching jobs and handles the entire application process for you.
+                    </p>
+                </div>
+
+                <!-- Email Section -->
+                <div class="max-w-2xl mx-auto">
+                    <form id="emailForm">
+                        <div class="text-center mb-6">
+                            <h2 class="text-2xl font-semibold text-white mb-2">
+                                Join the Waiting List
+                            </h2>
+                            <p class="text-gray-300">
+                                Be among the first to experience automated job matching and applications.
+                            </p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <input
+                                type="email"
+                                id="email"
+                                placeholder="Your email address"
+                                class="flex-1 p-3 rounded-lg bg-black text-white border border-gray-700 placeholder-gray-500 text-base focus:outline-none focus:border-gray-500"
+                                required
+                            />
+                            <button 
+                                type="submit"
+                                class="bg-white text-black px-8 py-3 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-base font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                Join List
+                            </button>
+                        </div>
+                        <div class="mt-4">
+                            <label class="flex items-center gap-2 text-sm text-gray-300">
+                                <input type="checkbox" id="consent" required class="rounded border-gray-700 bg-black text-white focus:ring-gray-500">
+                                I agree to the <a href="privacy-policy.html" class="text-white hover:text-gray-300 underline">Privacy Policy</a> and consent to receiving updates about HundoHire.
+                            </label>
+                        </div>
+                        <p id="error" class="text-red-500 text-sm mt-3 hidden"></p>
+                        <p id="success" class="text-green-500 text-sm mt-3 hidden">You're on the list! We'll be in touch soon.</p>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <footer class="w-[95%] mx-auto py-6">
+            <hr class="border-gray-800" />
+            <div class="text-gray-400 mt-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+                <span>© 2025 HundoHire. All rights reserved.</span>
+                <a href="mailto:contact@hundohire.com" class="text-gray-300 hover:text-white transition-colors">contact@hundohire.com</a>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // Email validation function
+        function isValidEmail(email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return emailRegex.test(email);
+        }
+
+        // Function to update button state
+        function updateButtonState() {
+            const email = document.getElementById('email').value;
+            const consent = document.getElementById('consent').checked;
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.disabled = !isValidEmail(email) || !consent;
+        }
+
+        // Initialize button state
+        document.addEventListener('DOMContentLoaded', () => {
+            updateButtonState();
+        });
+
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const consent = document.getElementById('consent').checked;
+            const submitButton = e.target.querySelector('button[type="submit"]');
+
+            // Validate email and consent
+            if (!isValidEmail(email) || !consent) {
+                submitButton.disabled = true;
+                return;
+            }
+
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<span class="animate-spin">⟳</span> Joining...';
+
+            try {
+                // Replace this URL with your Google Apps Script deployment URL
+                const scriptURL = 'https://europe-north1-hundohire-com.cloudfunctions.net/proxy_to_gas';
+                
+                const response = await fetch(scriptURL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        consent: consent,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('success').classList.remove('hidden');
+                    document.getElementById('error').classList.add('hidden');
+                    e.target.reset();
+                    submitButton.classList.add('button-success');
+                    submitButton.innerHTML = '<span class="checkmark"></span> Success';
+                } else {
+                    document.getElementById('error').textContent = result.message || 'An error occurred. Please try again.';
+                    document.getElementById('error').classList.remove('hidden');
+                    document.getElementById('success').classList.add('hidden');
+                    submitButton.classList.add('button-error');
+                    submitButton.innerHTML = '<span class="checkmark error"></span> Error';
+                }
+            } catch (err) {
+                document.getElementById('error').textContent = 'An error occurred. Please try again.';
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('success').classList.add('hidden');
+                submitButton.classList.add('button-error');
+                submitButton.innerHTML = '<span class="checkmark error"></span> Error';
+            } finally {
+                // Keep button disabled in both success and error states
+                if (!submitButton.classList.contains('button-success') && !submitButton.classList.contains('button-error')) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Join List';
+                }
+                updateButtonState(); // Update button state after submission
+            }
+        });
+
+        // Add input event listener for email
+        document.getElementById('email').addEventListener('input', updateButtonState);
+
+        // Add change event listener for consent checkbox
+        document.getElementById('consent').addEventListener('change', updateButtonState);
+    </script>
+</body>
+</html> 
