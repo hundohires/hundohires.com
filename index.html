@@ -175,19 +175,35 @@
                 };
                 debugLog('Request body:', requestBody);
 
+                // Log all request headers
+                const requestHeaders = {
+                    'Content-Type': 'application/json',
+                    'Origin': window.location.origin,
+                    'Accept': 'application/json'
+                };
+                debugLog('Request headers:', requestHeaders);
+
                 const response = await fetch(scriptURL, {
                     method: 'POST',
                     mode: 'cors',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: requestHeaders,
                     body: JSON.stringify(requestBody)
                 });
+
+                // Log all response headers
+                const responseHeaders = {};
+                response.headers.forEach((value, key) => {
+                    responseHeaders[key] = value;
+                });
+                debugLog('Response headers:', responseHeaders);
 
                 debugLog('Response received:', {
                     status: response.status,
                     statusText: response.statusText,
-                    headers: Object.fromEntries(response.headers.entries())
+                    headers: responseHeaders,
+                    url: response.url,
+                    type: response.type,
+                    redirected: response.redirected
                 });
 
                 if (!response.ok) {
