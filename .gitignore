@@ -1,0 +1,5 @@
+.gcloudignore
+node_modules
+Code.gs
+main.py
+requirements.txt
