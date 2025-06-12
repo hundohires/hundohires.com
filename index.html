@@ -109,20 +109,10 @@
     </div>
 
     <script>
-        // Debug logging utility
-        const DEBUG = true;
-        function debugLog(...args) {
-            if (DEBUG) {
-                console.log('[HundoHires Debug]', new Date().toISOString(), ...args);
-            }
-        }
-
         // Email validation function
         function isValidEmail(email) {
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            const isValid = emailRegex.test(email);
-            debugLog('Email validation:', { email, isValid });
-            return isValid;
+            return emailRegex.test(email);
         }
 
         // Function to update button state
@@ -130,58 +120,43 @@
             const email = document.getElementById('email').value;
             const consent = document.getElementById('consent').checked;
             const submitButton = document.querySelector('button[type="submit"]');
-            const isDisabled = !isValidEmail(email) || !consent;
-            debugLog('Button state update:', { email, consent, isDisabled });
-            submitButton.disabled = isDisabled;
+            submitButton.disabled = !isValidEmail(email) || !consent;
         }
 
         // Initialize button state
         document.addEventListener('DOMContentLoaded', () => {
-            debugLog('DOM loaded, initializing form');
             updateButtonState();
         });
 
         document.getElementById('emailForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            debugLog('Form submission started');
             
             const email = document.getElementById('email').value;
             const consent = document.getElementById('consent').checked;
             const submitButton = e.target.querySelector('button[type="submit"]');
 
-            debugLog('Form data:', { email, consent });
-
             // Validate email and consent
             if (!isValidEmail(email) || !consent) {
-                debugLog('Validation failed:', { 
-                    emailValid: isValidEmail(email), 
-                    consentGiven: consent 
-                });
                 submitButton.disabled = true;
                 return;
             }
 
             submitButton.disabled = true;
             submitButton.innerHTML = '<span class="animate-spin">⟳</span> Joining...';
-            debugLog('Button state updated to loading');
 
             try {
-                const scriptURL = 'https://europe-north1-hundohires-com.cloudfunctions.net/proxy_to_gas';
-                debugLog('Sending request to:', scriptURL);
+                const scriptURL = 'https://europe-north1-hundohires-com.cloudfunctions.net/hundohires';
                 
                 const requestBody = {
                     email: email,
                     consent: consent
                 };
-                debugLog('Request body:', requestBody);
 
-                // Log all request headers
                 const requestHeaders = {
                     'Content-Type': 'application/json',
                     'Origin': window.location.origin,
                     'Accept': 'application/json'
                 };
-                debugLog('Request headers:', requestHeaders);
 
                 const response = await fetch(scriptURL, {
                     method: 'POST',
@@ -190,38 +165,19 @@
                     body: JSON.stringify(requestBody)
                 });
 
-                // Log all response headers
-                const responseHeaders = {};
-                response.headers.forEach((value, key) => {
-                    responseHeaders[key] = value;
-                });
-                debugLog('Response headers:', responseHeaders);
-
-                debugLog('Response received:', {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: responseHeaders,
-                    url: response.url,
-                    type: response.type,
-                    redirected: response.redirected
-                });
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const result = await response.json();
-                debugLog('Response data:', result);
                 
                 if (result.success) {
-                    debugLog('Request successful');
                     document.getElementById('success').classList.remove('hidden');
                     document.getElementById('error').classList.add('hidden');
                     e.target.reset();
                     submitButton.classList.add('button-success');
                     submitButton.innerHTML = '<span class="checkmark"></span> Success';
                 } else {
-                    debugLog('Request failed:', result);
                     document.getElementById('error').textContent = result.message || 'An error occurred. Please try again.';
                     document.getElementById('error').classList.remove('hidden');
                     document.getElementById('success').classList.add('hidden');
@@ -229,18 +185,12 @@
                     submitButton.innerHTML = '<span class="checkmark error"></span> Error';
                 }
             } catch (err) {
-                debugLog('Error occurred:', {
-                    name: err.name,
-                    message: err.message,
-                    stack: err.stack
-                });
                 document.getElementById('error').textContent = 'An error occurred. Please try again.';
                 document.getElementById('error').classList.remove('hidden');
                 document.getElementById('success').classList.add('hidden');
                 submitButton.classList.add('button-error');
                 submitButton.innerHTML = '<span class="checkmark error"></span> Error';
             } finally {
-                debugLog('Form submission completed');
                 // Keep button disabled in both success and error states
                 if (!submitButton.classList.contains('button-success') && !submitButton.classList.contains('button-error')) {
                     submitButton.disabled = false;
@@ -252,19 +202,17 @@
 
         // Add input event listener for email
         document.getElementById('email').addEventListener('input', (e) => {
-            debugLog('Email input changed:', e.target.value);
             updateButtonState();
         });
 
         // Add change event listener for consent checkbox
         document.getElementById('consent').addEventListener('change', (e) => {
-            debugLog('Consent checkbox changed:', e.target.checked);
             updateButtonState();
         });
 
         // Add error event listener for unhandled errors
         window.addEventListener('error', (event) => {
-            debugLog('Unhandled error:', {
+            console.error('Unhandled error:', {
                 message: event.message,
                 filename: event.filename,
                 lineno: event.lineno,
@@ -275,7 +223,7 @@
 
         // Add unhandled promise rejection listener
         window.addEventListener('unhandledrejection', (event) => {
-            debugLog('Unhandled promise rejection:', {
+            console.error('Unhandled promise rejection:', {
                 reason: event.reason
             });
         });
